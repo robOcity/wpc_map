@@ -8,14 +8,13 @@ of dates, and store the maps in a folder.
 
 import requests                     # issues http requests and handles responses
 import shutil                       # used to handle copying the map from a stream to a file
-
 import sys                          # access to stderr, ...
 from bs4 import BeautifulSoup       # used to parse and search the http responses
 import iso8601                      # parsing standardized time strings
 import datetime                     # like it says
 import os.path                      # handle file creating, naming and storing
 from urllib.parse import urljoin    # builds a url from pieces and parts
-
+import time
 
 # constants to simplify maintenance
 SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
@@ -23,6 +22,8 @@ PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
 MAP_DIR = './maps'
 IMAGE_FILE_TYPE = 'gif'
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:54.0) Gecko/20100101 Firefox/54.0'
+WAIT_PERIOD = 5
 
 
 def make_url(date_and_time, map_type):
@@ -103,6 +104,12 @@ def get_map_path(map_dir, dt, map_type):
     return os.path.abspath(filepath)
 
 
+def get_map(map_url, map_file_path):
+    # TODO use scrapy to get the map
+    pass
+
+
+
 def download_map(map_url, map_file_path):
     """
     Downloads the weather map image and stores it as a local file.
@@ -112,22 +119,21 @@ def download_map(map_url, map_file_path):
     :return: True if the map was downloaded and successfully stored on disk, otherwise, False
     :exception: Any exception that occurs making the HTTP request or IOError from storing the file on disk
     """
-    #  get url to the weather map image from the DOM
-    resp = requests.get(map_url)
+    #  get url to the weather map image from the DOM and do so looking like a browser, not a scraper
+    resp = requests.get(map_url, headers={'User-Agent': USER_AGENT})
     resp.raise_for_status()
-    soup = BeautifulSoup(resp.text)
+    soup = BeautifulSoup(resp.text, 'lxml')
     map_element = soup.select('.sfcmapimage')
 
     if not map_element:
         print('Could not find map image', file=sys.stderr)
         return False
     else:
-        print(type(map_element), repr(map_element))
         rel_image_path = map_element[0].get('src')
         # form the complete url for the image
         image_url = urljoin(urljoin(SITE_URL, PAGE_URL), rel_image_path)
-        # get the web page with the weather map
-        resp = requests.get(image_url, stream=True)
+        # get the web page with the weather map and look like a browser, not a scraper
+        resp = requests.get(image_url, headers={'User-Agent': USER_AGENT}, stream=True)
         resp.decode_content = True
         resp.raise_for_status()
 
@@ -162,6 +168,7 @@ def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
             url = make_url(dt, map_type)
             path = get_map_path(map_dir, dt, map_type)
             download_map(url, path)
+            time.sleep(WAIT_PERIOD)
 
 
 # TODO 0. Check into git

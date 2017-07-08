@@ -4,10 +4,10 @@ import wpc_map_scraper
 # TODO add setup and teardown behavior that creates and deletes a temporary test directory
 
 def test_scraper_map():
-    start = '2017-06-10'
-    stop = '2017-06-11'
-    times = ['00']
-    map_types = ['usfntsfc']
+    start = '2017-06-30'
+    stop = '2017-07-01'
+    times = ['00', '12']
+    map_types = ['usfntsfc', 'namussfc']
     map_dir = '~/Desktop/Weather_Maps'
     actual = wpc_map_scraper.scrape_map(start, stop, times, map_types, map_dir)
     assert(actual is True)
