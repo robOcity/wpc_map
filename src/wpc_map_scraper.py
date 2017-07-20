@@ -1,10 +1,10 @@
-'''
+"""
 This program downloads historical weather maps from the Weather Prediction Center (WPC)
 that is part of the National Weather Service.  Surface weather maps for North America and CONUS 
 are available from May 1, 2005 onward.  Eight different kinds of maps are available at eight 
 different times per day.  This program will allow you to download one type of map for a range
 of dates, and store the maps in a folder.
-'''
+"""
 
 import requests                     # issues http requests and handles responses
 import shutil                       # used to handle copying the map from a stream to a file
@@ -26,7 +26,7 @@ USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:54.0) Gecko/20100
 WAIT_PERIOD = 5
 
 
-def make_url(date_and_time, map_type):
+def build_page_url(date_and_time, map_type):
     """
     Makes the url of the page that contains the archived surface weather map.
 
@@ -104,44 +104,50 @@ def get_map_path(map_dir, dt, map_type):
     return os.path.abspath(filepath)
 
 
-def get_map(map_url, map_file_path):
-    # TODO use scrapy to get the map
-    pass
+def build_image_url(page_url):
+    """
+    Constructs the URL of weather map image found within the page.
+
+    :param page_url: The full url of the page containing the map
+    :return: The URL of the weather map image
+    :exception: Any exception that occurs making the HTTP request
+    """
+    #  get url to the weather map image from the DOM and do so looking like a browser, not a scraper
+    resp = requests.get(page_url, headers={'User-Agent': USER_AGENT})
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, 'lxml')
+    map_element = soup.select('.sfcmapimage')   # CSS class selector
+
+    image_url = None
+    if map_element:
+        rel_image_path = map_element[0].get('src')
+        # form the complete url for the image
+        image_url = urljoin(urljoin(SITE_URL, PAGE_URL), rel_image_path)
+    else:
+        print('Could not find map image', file=sys.stderr)
+
+    return image_url
 
 
-
-def download_map(map_url, map_file_path):
+def download_map(image_url, map_file_path):
     """
     Downloads the weather map image and stores it as a local file.
 
-    :param map_url: The full url of the image
+    :param image_url: The url of the weather map image
     :param map_file_path: The absolute path to store the image file
     :return: True if the map was downloaded and successfully stored on disk, otherwise, False
     :exception: Any exception that occurs making the HTTP request or IOError from storing the file on disk
     """
-    #  get url to the weather map image from the DOM and do so looking like a browser, not a scraper
-    resp = requests.get(map_url, headers={'User-Agent': USER_AGENT})
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, 'lxml')
-    map_element = soup.select('.sfcmapimage')
 
-    if not map_element:
-        print('Could not find map image', file=sys.stderr)
-        return False
-    else:
-        rel_image_path = map_element[0].get('src')
-        # form the complete url for the image
-        image_url = urljoin(urljoin(SITE_URL, PAGE_URL), rel_image_path)
-        # get the web page with the weather map and look like a browser, not a scraper
-        resp = requests.get(image_url, headers={'User-Agent': USER_AGENT}, stream=True)
-        resp.decode_content = True
-        resp.raise_for_status()
+    # get the map while appearing as a browser
+    resp = requests.get(image_url, headers={'User-Agent': USER_AGENT}, stream=True)
+    resp.decode_content = True
+    resp.raise_for_status()
 
     # save the map
     with open(map_file_path, '+wb') as fout:
         # copy the image to a file and have shutil handle the details
         shutil.copyfileobj(resp.raw, fout)
-    return True
 
 
 def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
@@ -165,25 +171,25 @@ def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
     dt_series = make_time_series(begin, end, map_times)
     for dt in dt_series:
         for map_type in map_types:
-            url = make_url(dt, map_type)
-            path = get_map_path(map_dir, dt, map_type)
-            download_map(url, path)
+            page_url = build_page_url(dt, map_type)
+            map_path = get_map_path(map_dir, dt, map_type)
+            image_url = build_image_url(page_url)
+            download_map(image_url, map_path)
             time.sleep(WAIT_PERIOD)
 
 
-# TODO 0. Check into git
-# TODO 1. Get app working
 # TODo 2. Add type hints
-# TODO 3Test bad / missing input values
+# TODO 3. Test bad / missing input values
 # TODO 4. Update documentation
 # TODO 5. Add a Readme.rst
 # TODO 6. Check into github
 # TODO 7. Have a beer
+# TODO 8. Create a python project
+
 def main():
     pass
-
-
-# TODO Click can't handle sequences with unknown length, consider alternaitives
+# TODO Handle command line arguements
+# TODO Click can't handle sequences with unknown length, consider alternatives
 # TODO Get Click command line working
 # TODO Create a python package structure
 # @click.command()
