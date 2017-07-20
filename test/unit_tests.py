@@ -6,7 +6,7 @@ def test_create_url():
     dt = datetime(year=2017, month=6, day=1, hour=12, tzinfo=timezone.utc)
     maptype = 'usfntsfc'
     expected = 'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=06/01/2017&selmap=2017060112&maptype=usfntsfc'
-    assert(wpc_map_scraper.make_url(dt, maptype)) == expected
+    assert (wpc_map_scraper.build_page_url(dt, maptype)) == expected
 
 
 def test_make_iso_date():
@@ -44,10 +44,24 @@ def test_short_build_time_series():
     assert(stop_dt in actual)
 
 
-def test_download_url():
+def test_page_url():
     expected = 'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=06/15/2017&selmap=2017061521&maptype=usfntsfc'
     date_str = '2017-06-15'
     time_str = '21'
     date_time = wpc_map_scraper.make_iso_date(date_str, time_str=time_str)
-    actual = wpc_map_scraper.make_url(date_time, 'usfntsfc')
-    assert(actual) == expected
+    assert (wpc_map_scraper.build_page_url(date_time, 'usfntsfc')) == expected
+
+
+def test_map_path():
+    expected = '/Users/rob/Downloads/wx_maps/20170601_12z_namussfc.gif'
+    dt = datetime(year=2017, month=6, day=1, hour=12, tzinfo=timezone.utc)
+    maptype = 'namussfc'
+    assert(wpc_map_scraper.get_map_path('~/Downloads/wx_maps', dt, maptype)) == expected
+
+
+def test_build_image_url():
+    expected = 'http://www.wpc.ncep.noaa.gov/archives/sfc/2017/namussfc2017060112.gif'
+    dt = datetime(year=2017, month=6, day=1, hour=12, tzinfo=timezone.utc)
+    maptype = 'namussfc'
+    page_url = wpc_map_scraper.build_page_url(dt, maptype)
+    assert(wpc_map_scraper.build_image_url(page_url)) == expected
