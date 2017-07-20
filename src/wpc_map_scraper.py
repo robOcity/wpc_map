@@ -86,8 +86,6 @@ def get_map_path(map_dir, dt, map_type):
     :param map_type: The type of surface map to download
     :return: Absolute path for the weather map image file
     """
-    map_path = None
-
     # name and create needed directory tree
     if map_dir:
         map_path = os.path.expanduser(map_dir)
@@ -97,9 +95,7 @@ def get_map_path(map_dir, dt, map_type):
     # recursively create the directory tree
     os.makedirs(map_path, exist_ok=True)
 
-    # create the filename
     filename = f'{dt.year:04d}{dt.month:02d}{dt.day:02d}_{dt.hour:02d}z_{map_type}'
-    # TODO use to Path from pathlib once python 2 sunsets
     filepath = os.path.join(os.path.abspath(map_path), filename + os.path.extsep + IMAGE_FILE_TYPE)
     return os.path.abspath(filepath)
 
@@ -178,13 +174,11 @@ def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
             time.sleep(WAIT_PERIOD)
 
 
-# TODo 2. Add type hints
 # TODO 3. Test bad / missing input values
-# TODO 4. Update documentation
+# TODO 4. Proof read documentation
 # TODO 5. Add a Readme.rst
 # TODO 6. Check into github
 # TODO 7. Have a beer
-# TODO 8. Create a python project
 
 def main():
     pass
