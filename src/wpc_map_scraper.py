@@ -1,9 +1,8 @@
-"""
-This program downloads historical weather maps from the Weather Prediction Center (WPC)
-that is part of the National Weather Service.  Surface weather maps for North America and CONUS 
-are available from May 1, 2005 onward.  Eight different kinds of maps are available at eight 
-different times per day.  This program will allow you to download one type of map for a range
-of dates, and store the maps in a folder.
+"""T
+his program downloads historical weather maps from the Weather Prediction Center (WPC) that is part of the
+National Weather Service.  Surface weather maps for North America and the Continental United States are
+available from May 1, 2005 onward.  Eight different kinds of maps are available at eight different times per day.
+This program will allow you to download one type of map for a range of dates, and store the maps in a folder.
 """
 
 import requests                     # issues http requests and handles responses
@@ -12,7 +11,7 @@ import sys                          # access to stderr, ...
 from bs4 import BeautifulSoup       # used to parse and search the http responses
 import iso8601                      # parsing standardized time strings
 import datetime                     # like it says
-import os.path                      # handle file creating, naming and storing
+import os.path                      # handles file creating, naming and storing
 from urllib.parse import urljoin    # builds a url from pieces and parts
 import time
 
@@ -22,7 +21,6 @@ PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
 MAP_DIR = './maps'
 IMAGE_FILE_TYPE = 'gif'
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:54.0) Gecko/20100101 Firefox/54.0'
 WAIT_PERIOD = 5
 
 
@@ -109,7 +107,7 @@ def build_image_url(page_url):
     :exception: Any exception that occurs making the HTTP request
     """
     #  get url to the weather map image from the DOM and do so looking like a browser, not a scraper
-    resp = requests.get(page_url, headers={'User-Agent': USER_AGENT})
+    resp = requests.get(page_url)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, 'lxml')
     map_element = soup.select('.sfcmapimage')   # CSS class selector
@@ -136,7 +134,7 @@ def download_map(image_url, map_file_path):
     """
 
     # get the map while appearing as a browser
-    resp = requests.get(image_url, headers={'User-Agent': USER_AGENT}, stream=True)
+    resp = requests.get(image_url, stream=True)
     resp.decode_content = True
     resp.raise_for_status()
 
