@@ -131,14 +131,10 @@ def _make_time_series(begin, end, times=None):
     >>> import wpc_map_scraper as wpc
 
     >>> wpc._make_time_series('2017-07-04', '2017-07-05')
-    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>),
-    datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
+    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
 
-    >>> wpc._make_time_series('2017-07-04', '2017-07-05', times=['00', '12'])
-    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>),
-    datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>),
-    datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>),
-    datetime.datetime(2017, 7, 5, 12, 0, tzinfo=<iso8601.Utc>)]
+    >>> wpc._make_time_series('2017-07-04', '2017-07-04', times=['00', '12'])
+    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>)]
     """
     # create the starting and ending datetime objects using values provided on the command line
     start_dt = _make_iso_date(begin)
