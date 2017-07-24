@@ -5,77 +5,163 @@ available from May 1, 2005 onward.  Eight different kinds of maps are available 
 This program will allow you to download one type of map for a range of dates, and store the maps in a folder.
 """
 
-import requests                     # issues http requests and handles responses
-import shutil                       # used to handle copying the map from a stream to a file
-import sys                          # access to stderr, ...
-from bs4 import BeautifulSoup       # used to parse and search the http responses
-import iso8601                      # parsing standardized time strings
-import datetime                     # like it says
-import os.path                      # handles file creating, naming and storing
-from urllib.parse import urljoin    # builds a url from pieces and parts
+import requests
+import shutil
+import sys
+from bs4 import BeautifulSoup
+import iso8601
+from datetime import datetime, timezone, timedelta   # like it says
+import os.path
+from urllib.parse import urljoin
 import time
+import click
 
 # constants to simplify maintenance
 SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
 PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
-MAP_DIR = './maps'
+MAP_DIR = './maps'  # directory to save the downloaded maps
 IMAGE_FILE_TYPE = 'gif'
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
-WAIT_PERIOD = 5
+WAIT_PERIOD = 5     # time in seconds to wait before downloading the next map.
 
 
-def build_page_url(date_and_time, map_type):
+def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
+    """
+    Downloads and saves a series of weather map images to disk.
+
+    One map of each type will be downloaded for every date and time specified.
+    :param begin: Starting data and time (inclusive)
+    :param end: Stopping date and time (inclusive)
+    :param map_times: Valid map times can include: 0, 6, 12, 18.  All times are UTC or 'Z'
+    :param map_types: Valid map types include following strings:
+        namussfc      Unites States (CONUS)
+        usfntsfc      United States (Fronts/Analysis Only)
+        print_us      United States (B/W)
+        ussatsfc      U.S. Analysis/Satellite Composition
+        radsfcus_exp  U.S. Analysis/Radar Composition
+        namfntsfc     North America (Fronts/Analysis Only)
+        satsfcnps     North America Analysis/Satellite Composition
+    :param map_dir: Folder used to store the downloaded map files
+    """
+    dt_series = _make_time_series(begin, end, map_times)
+    for dt in dt_series:
+        for map_type in map_types:
+            page_url = _build_page_url(dt, map_type)
+            map_path = _get_map_path(map_dir, dt, map_type)
+            image_url = _build_image_url(page_url)
+            _download_map(image_url, map_path)
+            time.sleep(WAIT_PERIOD)
+
+
+# TODO 3. Test bad / missing input values
+# TODO 4. Proof read documentation
+# TODO 5. Add a Readme.rst
+# TODO 6. Check into github
+# TODO 7. Have a beer
+# TODO Create a python package structure
+
+
+    @click.command()
+    @click.option('-sd', '--start-date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
+    @click.option('-ed', '--end-date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
+    @click.option('-dh', '--delta-hours',
+                  default=24, type=click.Choice([3, 6, 12, 24]),
+                  help='Hours between subsequent map downloads (3, 6, 12, 24)')
+    @click.option('-m', '--map-types', 'transformed', flag_value='lower',
+                  multiple=True,
+                  type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
+                  help='Type(s) of surface weather maps to download')
+    def download(start_date, end_date, start_hour, delta_hours, transformed):
+        """
+        This program downloads archived surface weather maps for a range of dates and times from the
+        Weather Prediction Center (part of the National Weather Service).
+        """
+        times = _make_times(delta_hours)
+        scrape_map(start_date, end_date, times, transformed)
+
+
+def _build_page_url(date_and_time, map_type):
     """
     Makes the url of the page that contains the archived surface weather map.
 
     :param date_and_time: The datetime for the map
     :param map_type: The type of surface map to download
     :returns The url for the surface map page with the date, time and map type correctly formatted
+
+    >>> import wpc_map_scraper as wpc
+    >>> map_time = wpc.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
+
+    >>> wpc._build_page_url(map_time, 'namussfc')
+    'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=07/04/2017&selmap=201707046&maptype=namussfc'
     """
     year, month, day, hour = date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour
     return f'{SITE_URL}{PAGE_URL}arcdate={month:02d}/{day:02d}/{year}&selmap={year}{month:02d}{day:02d}{hour}&maptype={map_type}'
 
 
-def make_iso_date(date_str, time_str='00'):
+def _make_iso_date(date_str, time_str='00'):
     """
     Makes and parses an ISO8601 compliant date string into a datetime object.
 
-    All times are in Universal Coordinated Time (UTC) which is commonly referred to a Z or 'Zulu'.
+    All times are in Universal Coordinated Time (UTC) which is commonly referred to a Z or 'Zulu'
     :param date_str: Valid date strings that have the form: YYYY-MM-DD or YYYYMMDD
-    :param time_str: Valid times include: 0, 6, 12, 18. All times are UTC or 'Z'.  Defaults to OZ.
+    :param time_str: Valid times include: 0, 6, 12, 18. All times are UTC or 'Z'.  Defaults to OZ
     :return: The datetime object for the specified date and time for the UTC time zone
+
+    >>> import wpc_map_scraper as wpc
+
+    >>> wpc._make_iso_date('2017-07-04')
+    datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)
+
+    >>> wpc._make_iso_date('2017-07-04', time_str='12')
+    datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>)
     """
     iso_str = date_str + 'T' + time_str + 'Z'
     return iso8601.parse_date(iso_str)
 
 
-def make_time_series(begin, end, times):
+def _make_time_series(begin, end, times=None):
     """
     Makes the series of datetime objects for the period of interest.
 
     :param begin: Starting date for the date range (inclusive)
     :param end: Ending date (inclusive) for the date range
-    :param times: List of times for daily maps
+    :param times: List of times for daily maps (defaults to '00')
     :return: A list of datetime objects for each time and every day specified in the range
+
+    >>> import wpc_map_scraper as wpc
+
+    >>> wpc._make_time_series('2017-07-04', '2017-07-05')
+    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>),
+    datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
+
+    >>> wpc._make_time_series('2017-07-04', '2017-07-05', times=['00', '12'])
+    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>),
+    datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>),
+    datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>),
+    datetime.datetime(2017, 7, 5, 12, 0, tzinfo=<iso8601.Utc>)]
     """
-    # create the starting and ending datetime objects using values provided on the command line 
-    start_dt = make_iso_date(begin)
-    stop_dt = make_iso_date(end)
+    # create the starting and ending datetime objects using values provided on the command line
+    start_dt = _make_iso_date(begin)
+    stop_dt = _make_iso_date(end)
     num_days = (stop_dt - start_dt).days  # timedelta object has a days attribute
 
     # reality check
     if start_dt > stop_dt:
         return []
 
+    # build default time list
+    if not times:
+        times = ['00']
+
     # build a list of datetime objects by adding incremental day and time offsets to the start date
     # note: range(value) is generates values from 0 to value - 1, therefore adding 1
     return [
-        start_dt + datetime.timedelta(days=d, hours=int(t))
+        start_dt + timedelta(days=d, hours=int(t))
         for d in range(num_days+1)
         for t in times]
 
 
-def get_map_path(map_dir, dt, map_type):
+def _get_map_path(map_dir, dt, map_type):
     """
     Makes the absolute path for the weather map image file.
 
@@ -83,6 +169,12 @@ def get_map_path(map_dir, dt, map_type):
     :param dt: Datetime of the map
     :param map_type: The type of surface map to download
     :return: Absolute path for the weather map image file
+
+    >>> import wpc_map_scraper as wpc
+    >>> dt = datetime(2017, 7, 4, 12, 0, tzinfo=iso8601.UTC)
+
+    >>> wpc._get_map_path('~/Desktop/Wx_Maps', dt, 'namussfc')
+    '/Users/rob/Desktop/Wx_Maps/20170704_12z_namussfc.gif'
     """
     # name and create needed directory tree
     if map_dir:
@@ -98,7 +190,7 @@ def get_map_path(map_dir, dt, map_type):
     return os.path.abspath(filepath)
 
 
-def build_image_url(page_url):
+def _build_image_url(page_url):
     """
     Constructs the URL of weather map image found within the page.
 
@@ -123,7 +215,7 @@ def build_image_url(page_url):
     return image_url
 
 
-def download_map(image_url, map_file_path):
+def _download_map(image_url, map_file_path):
     """
     Downloads the weather map image and stores it as a local file.
 
@@ -144,59 +236,16 @@ def download_map(image_url, map_file_path):
         shutil.copyfileobj(resp.raw, fout)
 
 
-def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
+def _make_times(delta_hours):
     """
-    Downloads and saves a series of weather map images to disk.
+    Creates the list of times that a map will be downloaded for each day starting a '00' UTC.
 
-    One map of each type will be downloaded for every date and time specified.
-    :param begin: Starting data and time (inclusive)
-    :param end: Stopping date and time (inclusive)
-    :param map_times: Valid map times can include: 0, 6, 12, 18.  All times are UTC or 'Z'
-    :param map_types: Valid map types include following (note the colon is NOT part of the name):
-        namussfc:     Unites States (CONUS)
-        usfntsfc:     United States (Fronts/Analysis Only)
-        print_us:     United States (B/W)
-        ussatsfc:     U.S. Analysis/Satellite Composition
-        radsfcus_exp: U.S. Analysis/Radar Composition
-        namfntsfc:    North America (Fronts/Analysis Only)
-        satsfcnps:    North America Analysis/Satellite Composition
-    :param map_dir: Folder to store the map files in
+    :param delta_hours: The change in hours between subsequent maps
+    :return: The list of times represented as list of strings
+
+    >>> _make_times(6)
+    ['00', '06', '12', '18']
     """
-    dt_series = make_time_series(begin, end, map_times)
-    for dt in dt_series:
-        for map_type in map_types:
-            page_url = build_page_url(dt, map_type)
-            map_path = get_map_path(map_dir, dt, map_type)
-            image_url = build_image_url(page_url)
-            download_map(image_url, map_path)
-            time.sleep(WAIT_PERIOD)
+    return [f'{t:02d}' for t in range(0, 24, delta_hours)]
 
 
-# TODO 3. Test bad / missing input values
-# TODO 4. Proof read documentation
-# TODO 5. Add a Readme.rst
-# TODO 6. Check into github
-# TODO 7. Have a beer
-
-def main():
-    pass
-# TODO Handle command line arguements
-# TODO Click can't handle sequences with unknown length, consider alternatives
-# TODO Get Click command line working
-# TODO Create a python package structure
-# @click.command()
-# @click.option('-b', '--begin', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
-# @click.option('-e', '--end',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-# @click.option('-t', '--times', multiple=True, help='Time(s) UTC or Z for weather map(s) (00, 06, 12, 18)')
-# @click.option('-m', '--maps',  multiple=True, help='Type(s) of surface weather maps to download (namussfc, usfntsfc, print_us, ussatsfc, radsfcus_exp, namfntsfc, na_zoomin, satsfcnps)')
-# def main():
-#     """
-#     This program downloads archived surface weather maps for a range of dates and times from the
-#     Weather Prediction Center (part of the National Weather Service).
-#     """
-#     dt_series = build_time_series(begin, end, times)
-#     scrape_map(begin, end, times, maps)
-
-
-if __name__ == '__main__':
-    main()
