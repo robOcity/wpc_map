@@ -32,10 +32,10 @@ def check_numbers(expected, paths, tmpdir):
 
 def scrape_maps(tmpdir, start, stop, times, maps):
     # create a sequence of events with two occurrences on two days
-    dates = [date for date in wpc.make_time_series(start, stop, times)]
+    dates = [date for date in wpc._make_time_series(start, stop, times)]
 
     # create the unique file names for each map and time
-    paths = [wpc.get_map_path(tmpdir, date, map)
+    paths = [wpc._get_map_path(tmpdir, date, map)
              for date in dates
              for map in maps]
     wpc.scrape_map(start, stop, times, maps, tmpdir)
