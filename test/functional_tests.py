@@ -1,4 +1,4 @@
-import get_map as wpc
+import wx_map as wpc
 import os
 
 

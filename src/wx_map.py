@@ -16,33 +16,34 @@ from urllib.parse import urljoin
 import time
 import click
 
-# constants to simplify maintenance
+# globals
+MAP_DIR = '~/Desktop/Wx_Maps'         # directory to save the downloaded maps
 SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
 PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
-MAP_DIR = '~/Desktop/Maps'  # directory to save the downloaded maps
-IMAGE_FILE_TYPE = 'gif'
+IMAGE_FILE_TYPE = 'gif'            # format used by WPC
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
-WAIT_PERIOD = 5     # time in seconds to wait before downloading the next map.
+WAIT_PERIOD = 5                    # kindness matters
 
 
 @click.command()
-@click.option('-s', '--start', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
-@click.option('-e', '--end',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-@click.option('-h', '--hours', type=click.Choice(['3', '6', '12', '24']), help='Hours between subsequent map downloads (3, 6, 12, 24)')
+@click.option('-s', '--start_date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
+@click.option('-e', '--end_date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
+@click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']),
+              help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z.')
 @click.option('-m', '--maps', 'transformed', flag_value='lower',
               multiple=True,
               type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
-              help='Type(s) of surface weather maps to download')
-@click.option('-d', '--dir', help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
-def cli(start, end, hours, maps, dir):
+              help='Type(s) of surface weather maps to download.  Repeat this option to specify different types of maps.')
+@click.option('-d', '--map_dir', help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
+def cli(start_date, end_date, period, maps, map_dir):
     """Downloads and saves a series of weather map images to disk.
 
     \b
     One map of each type will be downloaded for every date and time specified.
     :param start_date:  Starting data and time (inclusive)
     :param end_date:    Stopping date and time (inclusive)
-    :param delta_hours: Number of hours between subsequent downloads.  Valid values are: 0, 6, 12, 18.  All times are UTC or 'Z'
-    :param map_types:   Valid map types include following strings:
+    :param period:      Hours between subsequent maps, first map is always 00Z. Valid values are: 3, 6, 12, or 24.
+    :param maps:   Valid map types include following strings:
         namussfc        Unites States (CONUS)
         usfntsfc        United States (Fronts/Analysis Only)
         print_us        United States (B/W)
@@ -54,16 +55,16 @@ def cli(start, end, hours, maps, dir):
     """
     click.echo('start_date:', start_date)
     click.echo('end_date:', end_date)
-    click.echo('delta_hours:', delta_hours)
+    click.echo('delta_hours:', period)
     click.echo('map_types:', map_types)
     click.echo('map_dir:', map_dir)
-    times = _make_times(delta_hours)
+    times = _make_times(period)
     click.echo('times:', times)
     dt_series = _make_time_series(start_date, end_date, times)
     for dt in dt_series:
-        for map_type in map_types:
-            page_url = _build_page_url(dt, map_type)
-            map_path = _get_map_path(map_dir, dt, map_type)
+        for map in maps:
+            page_url = _build_page_url(dt, map)
+            map_path = _get_map_path(map_dir, dt, map)
             image_url = _build_image_url(page_url)
             _download_map(image_url, map_path)
             time.sleep(WAIT_PERIOD)
@@ -77,7 +78,7 @@ def _build_page_url(date_and_time, map_type):
     :param map_type: The type of surface map to download
     :returns The url for the surface map page with the date, time and map type correctly formatted
 
-    >>> import get_map as wpc
+    >>> import wx_map as wpc
     >>> map_time = wpc.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
 
     >>> wpc._build_page_url(map_time, 'namussfc')
@@ -96,7 +97,7 @@ def _make_iso_date(date_str, time_str='00'):
     :param time_str: Valid times include: 0, 6, 12, 18. All times are UTC or 'Z'.  Defaults to OZ
     :return: The datetime object for the specified date and time for the UTC time zone
 
-    >>> import get_map as wpc
+    >>> import wx_map as wpc
 
     >>> wpc._make_iso_date('2017-07-04')
     datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)
@@ -117,7 +118,7 @@ def _make_time_series(begin, end, times=None):
     :param times: List of times for daily maps (defaults to '00')
     :return: A list of datetime objects for each time and every day specified in the range
 
-    >>> import get_map as wpc
+    >>> import wx_map as wpc
 
     >>> wpc._make_time_series('2017-07-04', '2017-07-05')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
@@ -155,7 +156,7 @@ def _get_map_path(map_dir, dt, map_type):
     :param map_type: The type of surface map to download
     :return: Absolute path for the weather map image file
 
-    >>> import get_map as wpc
+    >>> import wx_map as wpc
     >>> dt = datetime(2017, 7, 4, 12, 0, tzinfo=iso8601.UTC)
 
     >>> wpc._get_map_path('~/Desktop/Wx_Maps', dt, 'namussfc')
