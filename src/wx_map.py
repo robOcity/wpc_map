@@ -17,34 +17,35 @@ import time
 import click
 
 # globals
-MAP_DIR = '~/Desktop/Wx_Maps'         # directory to save the downloaded maps
+MAP_DIR = '~/Desktop/Wx_Maps'      # directory to save the downloaded maps
 SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
 PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
 IMAGE_FILE_TYPE = 'gif'            # format used by WPC
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
-WAIT_PERIOD = 5                    # be kind its a resource we all share
+WAIT_PERIOD = 5                    # value in seconds between downloads (be kind its a resource we all share)
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
-@click.command()
+@click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--start_date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
 @click.option('-e', '--end_date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
 @click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']),
               help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z.')
 @click.option('-m', '--maps', 'transformed', flag_value='lower',
               multiple=True,
-              type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
+              type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'satsfcnps']),
               help='Type(s) of surface weather maps to download.  Repeat this option to specify several different types of maps.')
 @click.option('-d', '--map_dir',
-              help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
+              help="Directory to store downloaded maps. Defaults to {} and the path is normalized for operating system.".format(MAP_DIR))
 def cli(start_date, end_date, period, maps, map_dir):
-    """Downloads and saves a series of weather maps from the Weather Prediction Center Surface Analysis Archive.
+    """Downloads and saves a series of weather maps from the Weather Prediction Center's Surface Analysis Archive.
 
     \b
     One map of each type will be downloaded for every date and time specified.
     :param start_date:  Starting data and time (inclusive)
     :param end_date:    Stopping date and time (inclusive)
     :param period:      Hours between subsequent maps, first map is always 00Z. Valid values are: 3, 6, 12, or 24.
-    :param maps:   Valid map types include following strings:
+    :param maps:        Valid map types include following strings:
         namussfc        Unites States (CONUS)
         usfntsfc        United States (Fronts/Analysis Only)
         print_us        United States (B/W)
