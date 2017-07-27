@@ -28,7 +28,7 @@ def _scrape_maps(tmpdir, start, stop, times, maps):
     paths = [wpc._get_map_path(tmpdir, date, map)
              for date in dates
              for map in maps]
-    wpc.get_map(start, stop, times, maps, tmpdir)
+    wpc.cli(start, stop, times, maps, tmpdir)
     expected_num = len(dates) * len(maps)
     return expected_num, paths
 
