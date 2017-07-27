@@ -22,7 +22,7 @@ SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
 PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
 IMAGE_FILE_TYPE = 'gif'            # format used by WPC
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
-WAIT_PERIOD = 5                    # kindness matters
+WAIT_PERIOD = 5                    # be kind its a resource we all share
 
 
 @click.command()
@@ -37,7 +37,7 @@ WAIT_PERIOD = 5                    # kindness matters
 @click.option('-d', '--map_dir',
               help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
 def cli(start_date, end_date, period, maps, map_dir):
-    """Downloads and saves a series of weather map images to disk.
+    """Downloads and saves a series of weather maps from the Weather Prediction Center Surface Analysis Archive.
 
     \b
     One map of each type will be downloaded for every date and time specified.
@@ -52,13 +52,16 @@ def cli(start_date, end_date, period, maps, map_dir):
         radsfcus_exp    U.S. Analysis/Radar Composition
         namfntsfc       North America (Fronts/Analysis Only)
         satsfcnps       North America Analysis/Satellite Composition
+        sfc-zoom        North America Zoom-In (not currently supported by wx_map)
     :param map_dir:     Folder used to store the downloaded map files
     """
+    # TODO remove print statements once testing the CLI is working as expected
     click.echo('start_date:', start_date)
     click.echo('end_date:', end_date)
     click.echo('delta_hours:', period)
-    click.echo('map_types:', map_types)
+    click.echo('map_types:', maps)
     click.echo('map_dir:', map_dir)
+
     times = _make_times(period)
     click.echo('times:', times)
     dt_series = _make_time_series(start_date, end_date, times)
