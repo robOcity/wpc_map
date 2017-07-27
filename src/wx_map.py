@@ -29,13 +29,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--start_date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
 @click.option('-e', '--end_date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-@click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']), default=24,
-              help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z and period default is 24.')
-@click.option('-m', '--maps', 'transformed', flag_value='lower',
-              multiple=True,
+# Note: click.Choice does not currently does not support integers
+@click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']), default='24',
+              help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z.  The period default is 24.')
+@click.option('-m', '--maps', multiple=True,
               type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'satsfcnps']),
               help='Type(s) of surface weather maps to download.  Repeat this option to specify several different types of maps.')
-@click.option('-d', '--map_dir',
+@click.option('-d', '--map_dir', default=MAP_DIR,
               help="Directory to store downloaded maps. Defaults to {} and the path is normalized for operating system.".format(MAP_DIR))
 def cli(start_date, end_date, period, maps, map_dir):
     """Downloads and saves a series of weather maps from the Weather Prediction Center's Surface Analysis Archive.
@@ -59,15 +59,18 @@ def cli(start_date, end_date, period, maps, map_dir):
     # Note: \b in the above docstring forces click to maintain the formatting as is (search click preventing rewrapping)
 
     # TODO remove print statements once testing the CLI is working as expected
-    click.echo('start_date:', start_date, type(start_date))
-    click.echo('end_date:', end_date, type(end_date))
-    click.echo('delta_hours:', period, type(period))
-    click.echo('map_types:', maps, type(maps))
-    click.echo('map_dir:', map_dir, type(map_dir))
+    click.echo('start_date: {0!r}, type: {1}'.format(start_date, type(start_date)))
+    click.echo('end_date: {0!r}, type: {1}'.format(end_date, type(end_date)))
+    click.echo('delta_hours: {0!r}, type: {1}'.format(period, type(period)))
+    click.echo('map_types:{0!r}, type: {1}'.format(maps, type(maps)))
+    click.echo('map_dir: {0!r}, type: {1}'.format(map_dir, type(map_dir)))
 
-    times = _make_times(period)
-    click.echo('times:', times, type(times))
+    times = _make_times(int(period))
+    click.echo('times: {0!r}, type: {1}'.format(times, type(times)))
     dt_series = _make_time_series(start_date, end_date, times)
+    click.echo('wx_map\nNumber of maps to download: {}\n{}'.format(len(dt_series), dt_series))
+    sys.exit(0)
+
     for dt in dt_series:
         for map in maps:
             page_url = _build_page_url(dt, map)
