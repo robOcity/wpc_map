@@ -20,15 +20,17 @@ def test_scrape_map_sequence(tmpdir):
     _check_files_exist(paths)
 
 
-def _scrape_maps(tmpdir, start, stop, times, maps):
+def _scrape_maps(start, stop, period, maps, tmpdir):
     # create a sequence of events with two occurrences on two days
-    dates = [date for date in wpc._make_time_series(start, stop, times)]
+    dates = [date for date in wpc._make_time_series(start, stop, period)]
 
     # create the unique file names for each map and time
     paths = [wpc._get_map_path(tmpdir, date, map)
              for date in dates
              for map in maps]
-    wpc.cli(start, stop, times, maps, tmpdir)
+
+    # get the maps
+    wpc.cli(start, stop, period, maps, tmpdir)
     expected_num = len(dates) * len(maps)
     return expected_num, paths
 

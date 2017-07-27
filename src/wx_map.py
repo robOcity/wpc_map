@@ -15,6 +15,7 @@ import os.path
 from urllib.parse import urljoin
 import time
 import click
+from collections import namedtuple
 
 # globals
 MAP_DIR = '~/Desktop/Wx_Maps'      # directory to save the downloaded maps
@@ -25,11 +26,13 @@ MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
 WAIT_PERIOD = 5                    # value in seconds between downloads (be kind its a resource we all share)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
+Plan = namedtuple('Plan', 'page_url, map_path')
+
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--start_date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
 @click.option('-e', '--end_date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-# Note: click.Choice does not currently does not support integers
+# Note: click.Choice 6.x does not support integers, only strings
 @click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']), default='24',
               help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z.  The period default is 24.')
 @click.option('-m', '--maps', multiple=True,
@@ -58,25 +61,24 @@ def cli(start_date, end_date, period, maps, map_dir):
     """
     # Note: \b in the above docstring forces click to maintain the formatting as is (search click preventing rewrapping)
 
-    # TODO remove print statements once testing the CLI is working as expected
-    click.echo('start_date: {0!r}, type: {1}'.format(start_date, type(start_date)))
-    click.echo('end_date: {0!r}, type: {1}'.format(end_date, type(end_date)))
-    click.echo('delta_hours: {0!r}, type: {1}'.format(period, type(period)))
-    click.echo('map_types:{0!r}, type: {1}'.format(maps, type(maps)))
-    click.echo('map_dir: {0!r}, type: {1}'.format(map_dir, type(map_dir)))
+    plans = []
+    map_times = _make_times(int(period))
+    date_times = _make_time_series(start_date, end_date, map_times)
+    for dt in date_times:
+        for map_type in maps:
+            page_url = _build_page_url(dt, map_type)
+            map_path = _get_map_path(map_dir, dt, map_type)
+            plans.append(Plan(page_url=page_url, map_path=map_path))
 
-    times = _make_times(int(period))
-    click.echo('times: {0!r}, type: {1}'.format(times, type(times)))
-    dt_series = _make_time_series(start_date, end_date, times)
-    click.echo('wx_map\nNumber of maps to download: {}\n{}'.format(len(dt_series), dt_series))
-    sys.exit(0)
+    # TODO ask the user if what they requested is really what they want
+    #click.secho('wx_map\nNumber of maps to download: {}\n{}'.format(len(dt_series), dt_series))
 
-    for dt in dt_series:
-        for map in maps:
-            page_url = _build_page_url(dt, map)
-            map_path = _get_map_path(map_dir, dt, map)
-            image_url = _build_image_url(page_url)
-            _download_map(image_url, map_path)
+    with click.progressbar(plans) as bar:
+        for plan in bar:
+            # commence scrapping
+            image_url = _scan_page_for_map(plan.page_url)
+            _download_map_from_page(image_url, plan.map_path)
+            click.secho('\nPage URL:  {}\nImage URL\nMap Path:  {}\n'.format(plan.page_url, image_url, plan.map_path))
             time.sleep(WAIT_PERIOD)
 
 
@@ -98,13 +100,13 @@ def _build_page_url(date_and_time, map_type):
     return f'{SITE_URL}{PAGE_URL}arcdate={month:02d}/{day:02d}/{year}&selmap={year}{month:02d}{day:02d}{hour}&maptype={map_type}'
 
 
-def _make_iso_date(date_str, time_str='00'):
+def _make_iso_date(date_str, hour_str='00'):
     """
     Makes and parses an ISO8601 compliant date string into a datetime object.
 
     All times are in Universal Coordinated Time (UTC) which is commonly referred to a Z or 'Zulu'
     :param date_str: Valid date strings that have the form: YYYY-MM-DD or YYYYMMDD
-    :param time_str: Valid times include: 0, 6, 12, 18. All times are UTC or 'Z'.  Defaults to OZ
+    :param hour_str: Valid times include: 0, 3, 6, 12, 24. All times are UTC or 'Z'.  Defaults to OZ
     :return: The datetime object for the specified date and time for the UTC time zone
 
     >>> import wx_map as wpc
@@ -112,49 +114,65 @@ def _make_iso_date(date_str, time_str='00'):
     >>> wpc._make_iso_date('2017-07-04')
     datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)
 
-    >>> wpc._make_iso_date('2017-07-04', time_str='12')
+    >>> wpc._make_iso_date('2017-07-04', hour_str='12')
     datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>)
     """
-    iso_str = date_str + 'T' + time_str + 'Z'
+    iso_str = date_str + 'T' + hour_str + 'Z'
     return iso8601.parse_date(iso_str)
 
 
-def _make_time_series(begin, end, times=None):
+def _build_daily_map_times(period):
+    """
+    Create the list of daily map times.
+
+    Starting with the 0Z map and adding others for each period throughout the day.
+    :param period: The time between subsequent maps (3, 6, 12)
+    :return: The list of requested map times.
+
+    >>> import wx_map as wpc
+
+    >>> wpc._build_daily_map_times('6')
+    [0, 6, 12, 18]
+    """
+    period = int(period)
+    return [period * n
+            for n in range(24 // period)]
+
+
+def _make_time_series(start_date, end_date, period='24'):
     """
     Makes the series of datetime objects for the period of interest.
 
     :param begin: Starting date for the date range (inclusive)
     :param end: Ending date (inclusive) for the date range
-    :param times: List of times for daily maps (defaults to '00')
-    :return: A list of datetime objects for each time and every day specified in the range
+    :param period: The time between subsequent maps (defaults to '00')
+    :return: A list of datetime objects from the start date at 0Z to the end date with maps for each period specified.
 
     >>> import wx_map as wpc
+
+    >>> wpc._make_time_series('2017-07-04', '2017-07-04')
+    [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)]
 
     >>> wpc._make_time_series('2017-07-04', '2017-07-05')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
 
-    >>> wpc._make_time_series('2017-07-04', '2017-07-04', times=['00', '12'])
+    >>> wpc._make_time_series('2017-07-04', '2017-07-04', period='12')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>)]
     """
     # create the starting and ending datetime objects using values provided on the command line
-    start_dt = _make_iso_date(begin)
-    stop_dt = _make_iso_date(end)
+    start_dt = _make_iso_date(start_date)
+    stop_dt = _make_iso_date(end_date)
     num_days = (stop_dt - start_dt).days  # timedelta object has a days attribute
 
     # reality check
     if start_dt > stop_dt:
         return []
 
-    # build default time list
-    if not times:
-        times = ['00']
-
-    # build a list of datetime objects by adding incremental day and time offsets to the start date
-    # note: range(value) is generates values from 0 to value - 1, therefore adding 1
     return [
         start_dt + timedelta(days=d, hours=int(t))
         for d in range(num_days+1)
-        for t in times]
+        for t in _build_daily_map_times(period)
+    ]
 
 
 def _get_map_path(map_dir, dt, map_type):
@@ -186,7 +204,7 @@ def _get_map_path(map_dir, dt, map_type):
     return os.path.abspath(filepath)
 
 
-def _build_image_url(page_url):
+def _scan_page_for_map(page_url):
     """
     Constructs the URL of weather map image found within the page.
 
@@ -206,19 +224,19 @@ def _build_image_url(page_url):
         # form the complete url for the image
         image_url = urljoin(urljoin(SITE_URL, PAGE_URL), rel_image_path)
     else:
-        click.echo('Could not find map image', file=sys.stderr)
+        click.secho('Could not find map image', file=sys.stderr)
 
     return image_url
 
 
-def _download_map(image_url, map_file_path):
+def _download_map_from_page(image_url, map_file_path):
     """
     Downloads the weather map image and stores it as a local file.
 
     :param image_url: The url of the weather map image
     :param map_file_path: The absolute path to store the image file
     :return: True if the map was downloaded and successfully stored on disk, otherwise, False
-    :exception: Any exception that occurs making the HTTP request or IOError from storing the file on disk
+    :exception: Any exception that occurs making the HTTP request or an IOError when writing the image to disk
     """
 
     # get the map while appearing as a browser
