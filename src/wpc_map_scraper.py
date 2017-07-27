@@ -1,5 +1,5 @@
-"""T
-his program downloads historical weather maps from the Weather Prediction Center (WPC) that is part of the
+"""
+This program downloads historical weather maps from the Weather Prediction Center (WPC) that is part of the
 National Weather Service.  Surface weather maps for North America and the Continental United States are
 available from May 1, 2005 onward.  Eight different kinds of maps are available at eight different times per day.
 This program will allow you to download one type of map for a range of dates, and store the maps in a folder.
@@ -19,31 +19,47 @@ import click
 # constants to simplify maintenance
 SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
 PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
-MAP_DIR = './maps'  # directory to save the downloaded maps
+MAP_DIR = '~/Desktop/Maps'  # directory to save the downloaded maps
 IMAGE_FILE_TYPE = 'gif'
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
 WAIT_PERIOD = 5     # time in seconds to wait before downloading the next map.
 
 
-def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
+@click.command()
+@click.option('--start-date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
+@click.option('--end-date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
+@click.option('--delta-hours', default=24, type=click.Choice([3, 6, 12, 24]), help='Hours between subsequent map downloads (3, 6, 12, 24)')
+@click.option('--map-types', 'transformed', flag_value='lower',
+              multiple=True,
+              type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
+              help='Type(s) of surface weather maps to download')
+@click.option('-md', '--map-dir', help="Directory to store downloaded maps. Defaults to a Map directory on the user's desktop")
+def get_map(start_date, end_date, delta_hours, map_types, map_dir):
     """
     Downloads and saves a series of weather map images to disk.
 
     One map of each type will be downloaded for every date and time specified.
-    :param begin: Starting data and time (inclusive)
-    :param end: Stopping date and time (inclusive)
-    :param map_times: Valid map times can include: 0, 6, 12, 18.  All times are UTC or 'Z'
-    :param map_types: Valid map types include following strings:
-        namussfc      Unites States (CONUS)
-        usfntsfc      United States (Fronts/Analysis Only)
-        print_us      United States (B/W)
-        ussatsfc      U.S. Analysis/Satellite Composition
-        radsfcus_exp  U.S. Analysis/Radar Composition
-        namfntsfc     North America (Fronts/Analysis Only)
-        satsfcnps     North America Analysis/Satellite Composition
-    :param map_dir: Folder used to store the downloaded map files
+    :param start_date:  Starting data and time (inclusive)
+    :param end_date:    Stopping date and time (inclusive)
+    :param delta_hours: Number of hours between subsequent downloads.  Valid values are: 0, 6, 12, 18.  All times are UTC or 'Z'
+    :param map_types:   Valid map types include following strings:
+        namussfc        Unites States (CONUS)
+        usfntsfc        United States (Fronts/Analysis Only)
+        print_us        United States (B/W)
+        ussatsfc        U.S. Analysis/Satellite Composition
+        radsfcus_exp    U.S. Analysis/Radar Composition
+        namfntsfc       North America (Fronts/Analysis Only)
+        satsfcnps       North America Analysis/Satellite Composition
+    :param map_dir:     Folder used to store the downloaded map files
     """
-    dt_series = _make_time_series(begin, end, map_times)
+    print('start_date:', start_date)
+    print('end_date:', end_date)
+    print('delta_hours:', delta_hours)
+    print('map_types:', map_types)
+    print('map_dir:', map_dir)
+    times = _make_times(delta_hours)
+    print('times:', times)
+    dt_series = _make_time_series(start_date, end_date, times)
     for dt in dt_series:
         for map_type in map_types:
             page_url = _build_page_url(dt, map_type)
@@ -51,33 +67,6 @@ def scrape_map(begin, end, map_times, map_types, map_dir=MAP_DIR):
             image_url = _build_image_url(page_url)
             _download_map(image_url, map_path)
             time.sleep(WAIT_PERIOD)
-
-
-# TODO 3. Test bad / missing input values
-# TODO 4. Proof read documentation
-# TODO 5. Add a Readme.rst
-# TODO 6. Check into github
-# TODO 7. Have a beer
-# TODO Create a python package structure
-
-
-    @click.command()
-    @click.option('-sd', '--start-date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
-    @click.option('-ed', '--end-date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-    @click.option('-dh', '--delta-hours',
-                  default=24, type=click.Choice([3, 6, 12, 24]),
-                  help='Hours between subsequent map downloads (3, 6, 12, 24)')
-    @click.option('-m', '--map-types', 'transformed', flag_value='lower',
-                  multiple=True,
-                  type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
-                  help='Type(s) of surface weather maps to download')
-    def download(start_date, end_date, start_hour, delta_hours, transformed):
-        """
-        This program downloads archived surface weather maps for a range of dates and times from the
-        Weather Prediction Center (part of the National Weather Service).
-        """
-        times = _make_times(delta_hours)
-        scrape_map(start_date, end_date, times, transformed)
 
 
 def _build_page_url(date_and_time, map_type):
