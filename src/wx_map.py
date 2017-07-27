@@ -33,8 +33,9 @@ WAIT_PERIOD = 5                    # kindness matters
 @click.option('-m', '--maps', 'transformed', flag_value='lower',
               multiple=True,
               type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
-              help='Type(s) of surface weather maps to download.  Repeat this option to specify different types of maps.')
-@click.option('-d', '--map_dir', help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
+              help='Type(s) of surface weather maps to download.  Repeat this option to specify several different types of maps.')
+@click.option('-d', '--map_dir',
+              help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
 def cli(start_date, end_date, period, maps, map_dir):
     """Downloads and saves a series of weather map images to disk.
 
