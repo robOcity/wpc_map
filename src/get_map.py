@@ -34,10 +34,10 @@ WAIT_PERIOD = 5     # time in seconds to wait before downloading the next map.
               type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
               help='Type(s) of surface weather maps to download')
 @click.option('-d', '--dir', help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
-def get_map(start, end, hours, maps, dir):
-    """
-    Downloads and saves a series of weather map images to disk.
+def cli(start, end, hours, maps, dir):
+    """Downloads and saves a series of weather map images to disk.
 
+    \b
     One map of each type will be downloaded for every date and time specified.
     :param start_date:  Starting data and time (inclusive)
     :param end_date:    Stopping date and time (inclusive)
@@ -235,4 +235,4 @@ def _make_times(delta_hours):
 
 
 if __name__ == '__main__':
-    get_map()
+    cli()
