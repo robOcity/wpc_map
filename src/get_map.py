@@ -77,7 +77,7 @@ def _build_page_url(date_and_time, map_type):
     :param map_type: The type of surface map to download
     :returns The url for the surface map page with the date, time and map type correctly formatted
 
-    >>> import wpc_map_scraper as wpc
+    >>> import get_map as wpc
     >>> map_time = wpc.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
 
     >>> wpc._build_page_url(map_time, 'namussfc')
@@ -96,7 +96,7 @@ def _make_iso_date(date_str, time_str='00'):
     :param time_str: Valid times include: 0, 6, 12, 18. All times are UTC or 'Z'.  Defaults to OZ
     :return: The datetime object for the specified date and time for the UTC time zone
 
-    >>> import wpc_map_scraper as wpc
+    >>> import get_map as wpc
 
     >>> wpc._make_iso_date('2017-07-04')
     datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)
@@ -117,7 +117,7 @@ def _make_time_series(begin, end, times=None):
     :param times: List of times for daily maps (defaults to '00')
     :return: A list of datetime objects for each time and every day specified in the range
 
-    >>> import wpc_map_scraper as wpc
+    >>> import get_map as wpc
 
     >>> wpc._make_time_series('2017-07-04', '2017-07-05')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
@@ -155,7 +155,7 @@ def _get_map_path(map_dir, dt, map_type):
     :param map_type: The type of surface map to download
     :return: Absolute path for the weather map image file
 
-    >>> import wpc_map_scraper as wpc
+    >>> import get_map as wpc
     >>> dt = datetime(2017, 7, 4, 12, 0, tzinfo=iso8601.UTC)
 
     >>> wpc._get_map_path('~/Desktop/Wx_Maps', dt, 'namussfc')

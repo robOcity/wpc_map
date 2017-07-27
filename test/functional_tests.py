@@ -1,4 +1,4 @@
-import wpc_map_scraper as wpc
+import get_map as wpc
 import os
 
 
