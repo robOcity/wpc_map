@@ -26,15 +26,15 @@ WAIT_PERIOD = 5     # time in seconds to wait before downloading the next map.
 
 
 @click.command()
-@click.option('--start-date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
-@click.option('--end-date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-@click.option('--delta-hours', default=24, type=click.Choice([3, 6, 12, 24]), help='Hours between subsequent map downloads (3, 6, 12, 24)')
-@click.option('--map-types', 'transformed', flag_value='lower',
+@click.option('-s', '--start', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
+@click.option('-e', '--end',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
+@click.option('-h', '--hours', type=click.Choice(['3', '6', '12', '24']), help='Hours between subsequent map downloads (3, 6, 12, 24)')
+@click.option('-m', '--maps', 'transformed', flag_value='lower',
               multiple=True,
               type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'na_zoomin', 'satsfcnps']),
               help='Type(s) of surface weather maps to download')
-@click.option('-md', '--map-dir', help="Directory to store downloaded maps. Defaults to a Map directory on the user's desktop")
-def get_map(start_date, end_date, delta_hours, map_types, map_dir):
+@click.option('-d', '--dir', help="Directory to store downloaded maps. Defaults to a Maps directory on the user's desktop")
+def get_map(start, end, hours, maps, dir):
     """
     Downloads and saves a series of weather map images to disk.
 
@@ -52,13 +52,13 @@ def get_map(start_date, end_date, delta_hours, map_types, map_dir):
         satsfcnps       North America Analysis/Satellite Composition
     :param map_dir:     Folder used to store the downloaded map files
     """
-    print('start_date:', start_date)
-    print('end_date:', end_date)
-    print('delta_hours:', delta_hours)
-    print('map_types:', map_types)
-    print('map_dir:', map_dir)
+    click.echo('start_date:', start_date)
+    click.echo('end_date:', end_date)
+    click.echo('delta_hours:', delta_hours)
+    click.echo('map_types:', map_types)
+    click.echo('map_dir:', map_dir)
     times = _make_times(delta_hours)
-    print('times:', times)
+    click.echo('times:', times)
     dt_series = _make_time_series(start_date, end_date, times)
     for dt in dt_series:
         for map_type in map_types:
@@ -195,7 +195,7 @@ def _build_image_url(page_url):
         # form the complete url for the image
         image_url = urljoin(urljoin(SITE_URL, PAGE_URL), rel_image_path)
     else:
-        print('Could not find map image', file=sys.stderr)
+        click.echo('Could not find map image', file=sys.stderr)
 
     return image_url
 
@@ -234,3 +234,5 @@ def _make_times(delta_hours):
     return [f'{t:02d}' for t in range(0, 24, delta_hours)]
 
 
+if __name__ == '__main__':
+    get_map()
