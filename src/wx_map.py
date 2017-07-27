@@ -29,8 +29,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--start_date', help='Starting date as YYYY-MM-DD or YYYYMMDD format. ')
 @click.option('-e', '--end_date',   help='Ending date as YYYY-MM-DD or YYYYMMDD format')
-@click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']),
-              help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z.')
+@click.option('-p', '--period', type=click.Choice(['3', '6', '12', '24']), default=24,
+              help='Hours between subsequent maps (3, 6, 12, 24).  First map is always 00Z and period default is 24.')
 @click.option('-m', '--maps', 'transformed', flag_value='lower',
               multiple=True,
               type=click.Choice(['namussfc', 'usfntsfc', 'print_us', 'ussatsfc', 'radsfcus_exp', 'namfntsfc', 'satsfcnps']),
@@ -56,15 +56,17 @@ def cli(start_date, end_date, period, maps, map_dir):
         sfc-zoom        North America Zoom-In (not currently supported by wx_map)
     :param map_dir:     Folder used to store the downloaded map files
     """
+    # Note: \b in the above docstring forces click to maintain the formatting as is (search click preventing rewrapping)
+
     # TODO remove print statements once testing the CLI is working as expected
-    click.echo('start_date:', start_date)
-    click.echo('end_date:', end_date)
-    click.echo('delta_hours:', period)
-    click.echo('map_types:', maps)
-    click.echo('map_dir:', map_dir)
+    click.echo('start_date:', start_date, type(start_date))
+    click.echo('end_date:', end_date, type(end_date))
+    click.echo('delta_hours:', period, type(period))
+    click.echo('map_types:', maps, type(maps))
+    click.echo('map_dir:', map_dir, type(map_dir))
 
     times = _make_times(period)
-    click.echo('times:', times)
+    click.echo('times:', times, type(times))
     dt_series = _make_time_series(start_date, end_date, times)
     for dt in dt_series:
         for map in maps:
