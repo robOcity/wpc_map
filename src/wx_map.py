@@ -62,8 +62,7 @@ def cli(start_date, end_date, period, maps, map_dir):
     # Note: \b in the above docstring forces click to maintain the formatting as is (search click preventing rewrapping)
 
     plans = []
-    map_times = _make_times(int(period))
-    date_times = _make_time_series(start_date, end_date, map_times)
+    date_times = _make_time_series(start_date, end_date, period)
     for dt in date_times:
         for map_type in maps:
             page_url = _build_page_url(dt, map_type)
@@ -78,7 +77,7 @@ def cli(start_date, end_date, period, maps, map_dir):
             # commence scrapping
             image_url = _scan_page_for_map(plan.page_url)
             _download_map_from_page(image_url, plan.map_path)
-            click.secho('\nPage URL:  {}\nImage URL\nMap Path:  {}\n'.format(plan.page_url, image_url, plan.map_path))
+            click.secho('\nPage URL:  {}\nImage URL: {}\nMap Path:  {}\n'.format(plan.page_url, image_url, plan.map_path))
             time.sleep(WAIT_PERIOD)
 
 
@@ -97,7 +96,7 @@ def _build_page_url(date_and_time, map_type):
     'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=07/04/2017&selmap=201707046&maptype=namussfc'
     """
     year, month, day, hour = date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour
-    return f'{SITE_URL}{PAGE_URL}arcdate={month:02d}/{day:02d}/{year}&selmap={year}{month:02d}{day:02d}{hour}&maptype={map_type}'
+    return f'{SITE_URL}{PAGE_URL}arcdate={month:02d}/{day:02d}/{year}&selmap={year}{month:02d}{day:02d}{hour:02d}&maptype={map_type}'
 
 
 def _make_iso_date(date_str, hour_str='00'):
