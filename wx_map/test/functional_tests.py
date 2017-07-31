@@ -1,6 +1,8 @@
-import wx_map as wx
 import os
+
 from click.testing import CliRunner
+
+import wx_map as wx
 
 
 def test_scrape_map(tmpdir):

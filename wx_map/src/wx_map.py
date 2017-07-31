@@ -1,6 +1,7 @@
 """
-This program downloads historical weather maps from the Weather Prediction Center (WPC) that is part of the
-National Weather Service.  Surface weather maps for North America and the Continental United States are
+Downloads archived weather maps from the Weather Prediction Center (WPC).
+
+Surface weather maps for North America and the Continental United States are
 available from May 1, 2005 onward.  Eight different kinds of maps are available at eight different times per day.
 This program will allow you to download one type of map for a range of dates, and store the maps in a folder.
 """

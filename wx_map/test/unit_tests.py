@@ -1,5 +1,6 @@
-import wx_map
 from datetime import datetime, timezone
+
+import wx_map
 
 
 def test_create_url():
