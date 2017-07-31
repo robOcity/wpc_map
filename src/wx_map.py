@@ -214,7 +214,7 @@ def _scan_page_for_map(page_url):
     #  get url to the weather map image from the DOM and do so looking like a browser, not a scraper
     resp = requests.get(page_url)
     resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, 'lxml')
+    soup = BeautifulSoup(resp.text, 'html.parser')
     map_element = soup.select('.sfcmapimage')   # CSS class selector
 
     image_url = None
