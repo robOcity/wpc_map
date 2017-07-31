@@ -93,7 +93,7 @@ def _build_page_url(date_and_time, map_type):
     >>> map_time = wpc.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
 
     >>> wpc._build_page_url(map_time, 'namussfc')
-    'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=07/04/2017&selmap=201707046&maptype=namussfc'
+    'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=07/04/2017&selmap=2017070406&maptype=namussfc'
     """
     year, month, day, hour = date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour
     return f'{SITE_URL}{PAGE_URL}arcdate={month:02d}/{day:02d}/{year}&selmap={year}{month:02d}{day:02d}{hour:02d}&maptype={map_type}'
