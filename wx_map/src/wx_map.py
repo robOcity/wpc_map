@@ -57,7 +57,6 @@ def cli(start_date, end_date, period, maps, map_dir):
         radsfcus_exp    U.S. Analysis/Radar Composition
         namfntsfc       North America (Fronts/Analysis Only)
         satsfcnps       North America Analysis/Satellite Composition
-        sfc-zoom        North America Zoom-In (not currently supported by wx_map)
     :param map_dir:     Folder used to store the downloaded map files
     """
     # Note: \b in the above docstring forces click to maintain the formatting as is (search click preventing rewrapping)
@@ -78,7 +77,7 @@ def cli(start_date, end_date, period, maps, map_dir):
             # commence scrapping
             image_url = _scan_page_for_map(plan.page_url)
             _download_map_from_page(image_url, plan.map_path)
-            click.secho('\nPage URL:  {}\nImage URL: {}\nMap Path:  {}\n'.format(plan.page_url, image_url, plan.map_path))
+            click.secho('\nSaving file: {}'.format(plan.map_path))
             time.sleep(WAIT_PERIOD)
 
 
