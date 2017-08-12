@@ -9,5 +9,7 @@ setup(
     author='Robert Osterburg',
     author_email='robert.osterburg@gmail.com',
     description=('Downloads archived weather maps from the',
-                 'Weather Prediction Center (WPC).')
+                 'Weather Prediction Center (WPC).'),
+    keywords=['weather', 'map', 'surface'],
+    classifiers=[],
 )
