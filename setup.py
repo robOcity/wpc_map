@@ -1,5 +1,6 @@
 from distutils.core import setup
 
+
 setup(
     name='wx_map',
     version='0.5',
@@ -11,5 +12,20 @@ setup(
     description=('Downloads archived weather maps from the',
                  'Weather Prediction Center (WPC).'),
     keywords=['weather', 'map', 'surface'],
-    classifiers=['Topic :: Scientific/Engineering :: Atmospheric Science'],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'License :: OSI Approved :: MIT License',
+        'Environment :: Console',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Topic :: Utilities',
+        'Topic :: Scientific/Engineering :: Atmospheric Science'],
+    long_description="""\
+Downloads archived weather maps from the Weather Prediction Center (WPC).
+
+Surface weather maps for North America and the Continental United States are
+available from May 1, 2005 onward.  Eight different kinds of maps are available at eight different times each day.
+This program will allow you to download one type of map for a range of dates, and store the maps in a folder. 
+"""
 )
