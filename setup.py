@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='wx_map',
-    version='0.9',
+    version='0.5',
     packages=['wx_map'],
     url='https://github.com/robOcity/wx_map',
     license='MIT',
