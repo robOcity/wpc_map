@@ -11,5 +11,5 @@ setup(
     description=('Downloads archived weather maps from the',
                  'Weather Prediction Center (WPC).'),
     keywords=['weather', 'map', 'surface'],
-    classifiers=[],
+    classifiers=['Topic :: Scientific/Engineering :: Atmospheric Science'],
 )
