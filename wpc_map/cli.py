@@ -70,7 +70,7 @@ def get(start_date, end_date, period, maps, map_dir):
             plans.append(Plan(page_url=page_url, map_path=map_path))
 
     # TODO ask the user if what they requested is really what they want
-    #click.secho('wx_map\nNumber of maps to download: {}\n{}'.format(len(dt_series), dt_series))
+    #click.secho('wpc_map\nNumber of maps to download: {}\n{}'.format(len(dt_series), dt_series))
 
     with click.progressbar(plans) as bar:
         for plan in bar:
@@ -89,7 +89,7 @@ def _build_page_url(date_and_time, map_type):
     :param map_type: The type of surface map to download
     :returns The url for the surface map page with the date, time and map type correctly formatted
 
-    >>> from wx_map import cli
+    >>> from wpc_map import cli
     >>> map_time = cli.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
 
     >>> cli._build_page_url(map_time, 'namussfc')
@@ -108,7 +108,7 @@ def _make_iso_date(date_str, hour_str='00'):
     :param hour_str: Valid times include: 0, 3, 6, 12, 24. All times are UTC or 'Z'.  Defaults to OZ
     :return: The datetime object for the specified date and time for the UTC time zone
 
-    >>> from wx_map import cli
+    >>> from wpc_map import cli
 
     >>> cli._make_iso_date('2017-07-04')
     datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)
@@ -128,7 +128,7 @@ def _build_daily_map_times(period):
     :param period: The time between subsequent maps (3, 6, 12)
     :return: The list of requested map times.
 
-    >>> from wx_map import cli
+    >>> from wpc_map import cli
 
     >>> cli._build_daily_map_times('6')
     [0, 6, 12, 18]
@@ -147,7 +147,7 @@ def _make_time_series(start_date, end_date, period='24'):
     :param period: The time between subsequent maps (defaults to '00')
     :return: A list of datetime objects from the start date at 0Z to the end date with maps for each period specified.
 
-    >>> from wx_map import cli
+    >>> from wpc_map import cli
 
     >>> cli._make_time_series('2017-07-04', '2017-07-04')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)]
@@ -183,7 +183,7 @@ def _get_map_path(map_dir, dt, map_type):
     :param map_type: The type of surface map to download
     :return: Absolute path for the weather map image file
 
-    >>> from wx_map import cli
+    >>> from wpc_map import cli
     >>> dt = datetime(2017, 7, 4, 12, 0, tzinfo=iso8601.UTC)
 
     >>> cli._get_map_path('~/Desktop/Wx_Maps', dt, 'namussfc')
