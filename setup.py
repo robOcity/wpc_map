@@ -22,7 +22,7 @@ setup(
         'Topic :: Utilities',
         'Topic :: Scientific/Engineering :: Atmospheric Science'],
     long_description="""\
-Downloads archived weather maps from the Weather Prediction Center (WPC).
+Download a sequence of archived weather maps from the Weather Prediction Center (WPC).
 
 Surface weather maps for North America and the Continental United States are
 available from May 1, 2005 onward.  Eight different kinds of maps are available at eight different times each day.
