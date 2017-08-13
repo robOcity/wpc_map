@@ -13,9 +13,10 @@ setup(
                  'Weather Prediction Center (WPC).'),
     keywords=['weather', 'map', 'surface'],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 2 - Pre-Alpha',
         'License :: OSI Approved :: MIT License',
         'Environment :: Console',
+        'Intended Audience :: Science/Research',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
