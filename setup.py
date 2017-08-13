@@ -1,10 +1,10 @@
 from distutils.core import setup
 
 setup(
-    name='wx_map',
+    name='wpc_map',
     version='0.5',
-    packages=['wx_map'],
-        url='https://github.com/robOcity/wx_map',
+    packages=['wpc_map'],
+        url='https://github.com/robOcity/wpc_map',
     license='MIT',
     author='Robert Osterburg',
     author_email='robert.osterburg@gmail.com',
