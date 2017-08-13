@@ -1,6 +1,5 @@
 from distutils.core import setup
 
-
 setup(
     name='wx_map',
     version='0.5',
@@ -9,14 +8,14 @@ setup(
     license='MIT',
     author='Robert Osterburg',
     author_email='robert.osterburg@gmail.com',
-    description=('Downloads archived weather maps from the',
-                 'Weather Prediction Center (WPC).'),
+    description=('Download a sequence of archived weather maps',
+                 'from the Weather Prediction Center (WPC).'),
     keywords=['weather', 'map', 'surface'],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
-        'License :: OSI Approved :: MIT License',
         'Environment :: Console',
         'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
@@ -30,3 +29,8 @@ available from May 1, 2005 onward.  Eight different kinds of maps are available 
 This program will allow you to download one type of map for a range of dates, and store the maps in a folder. 
 """
 )
+
+
+
+
+
