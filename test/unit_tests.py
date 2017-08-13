@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from wx_map import cli
+from wpc_map import cli
 
 
 def test_create_url():
