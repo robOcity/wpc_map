@@ -41,7 +41,7 @@ Plan = namedtuple('Plan', 'page_url, map_path')
               help='Type(s) of surface weather maps to download.  Repeat this option to specify several different types of maps.')
 @click.option('-d', '--map_dir', default=MAP_DIR,
               help="Directory to store downloaded maps. Defaults to {} and the path is normalized for operating system.".format(MAP_DIR))
-def cli(start_date, end_date, period, maps, map_dir):
+def get(start_date, end_date, period, maps, map_dir):
     """Downloads and saves a series of weather maps from the Weather Prediction Center's Surface Analysis Archive.
 
     \b
@@ -59,7 +59,7 @@ def cli(start_date, end_date, period, maps, map_dir):
         satsfcnps       North America Analysis/Satellite Composition
     :param map_dir:     Folder used to store the downloaded map files
     """
-    # Note: \b in the above docstring forces click to maintain the formatting as is (search click preventing rewrapping)
+    # Note: \b in the above docstring forces click to maintain the formatting the docstring above
 
     plans = []
     date_times = _make_time_series(start_date, end_date, period)
@@ -89,10 +89,10 @@ def _build_page_url(date_and_time, map_type):
     :param map_type: The type of surface map to download
     :returns The url for the surface map page with the date, time and map type correctly formatted
 
-    >>> import wx_map as wpc
-    >>> map_time = wpc.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
+    >>> from wx_map import cli
+    >>> map_time = cli.datetime(year=2017, month=7, day=4, hour=6, tzinfo=timezone.utc)
 
-    >>> wpc._build_page_url(map_time, 'namussfc')
+    >>> cli._build_page_url(map_time, 'namussfc')
     'http://www.wpc.ncep.noaa.gov/archives/web_pages/sfc/sfc_archive_maps.php?arcdate=07/04/2017&selmap=2017070406&maptype=namussfc'
     """
     year, month, day, hour = date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour
@@ -108,12 +108,12 @@ def _make_iso_date(date_str, hour_str='00'):
     :param hour_str: Valid times include: 0, 3, 6, 12, 24. All times are UTC or 'Z'.  Defaults to OZ
     :return: The datetime object for the specified date and time for the UTC time zone
 
-    >>> import wx_map as wpc
+    >>> from wx_map import cli
 
-    >>> wpc._make_iso_date('2017-07-04')
+    >>> cli._make_iso_date('2017-07-04')
     datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)
 
-    >>> wpc._make_iso_date('2017-07-04', hour_str='12')
+    >>> cli._make_iso_date('2017-07-04', hour_str='12')
     datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>)
     """
     iso_str = date_str + 'T' + hour_str + 'Z'
@@ -128,9 +128,9 @@ def _build_daily_map_times(period):
     :param period: The time between subsequent maps (3, 6, 12)
     :return: The list of requested map times.
 
-    >>> import wx_map as wpc
+    >>> from wx_map import cli
 
-    >>> wpc._build_daily_map_times('6')
+    >>> cli._build_daily_map_times('6')
     [0, 6, 12, 18]
     """
     period = int(period)
@@ -147,15 +147,15 @@ def _make_time_series(start_date, end_date, period='24'):
     :param period: The time between subsequent maps (defaults to '00')
     :return: A list of datetime objects from the start date at 0Z to the end date with maps for each period specified.
 
-    >>> import wx_map as wpc
+    >>> from wx_map import cli
 
-    >>> wpc._make_time_series('2017-07-04', '2017-07-04')
+    >>> cli._make_time_series('2017-07-04', '2017-07-04')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>)]
 
-    >>> wpc._make_time_series('2017-07-04', '2017-07-05')
+    >>> cli._make_time_series('2017-07-04', '2017-07-05')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 5, 0, 0, tzinfo=<iso8601.Utc>)]
 
-    >>> wpc._make_time_series('2017-07-04', '2017-07-04', period='12')
+    >>> cli._make_time_series('2017-07-04', '2017-07-04', period='12')
     [datetime.datetime(2017, 7, 4, 0, 0, tzinfo=<iso8601.Utc>), datetime.datetime(2017, 7, 4, 12, 0, tzinfo=<iso8601.Utc>)]
     """
     # create the starting and ending datetime objects using values provided on the command line
@@ -183,10 +183,10 @@ def _get_map_path(map_dir, dt, map_type):
     :param map_type: The type of surface map to download
     :return: Absolute path for the weather map image file
 
-    >>> import wx_map as wpc
+    >>> from wx_map import cli
     >>> dt = datetime(2017, 7, 4, 12, 0, tzinfo=iso8601.UTC)
 
-    >>> wpc._get_map_path('~/Desktop/Wx_Maps', dt, 'namussfc')
+    >>> cli._get_map_path('~/Desktop/Wx_Maps', dt, 'namussfc')
     '/Users/rob/Desktop/Wx_Maps/20170704_12z_namussfc.gif'
     """
     # name and create needed directory tree
@@ -263,4 +263,4 @@ def _make_times(delta_hours):
 
 
 if __name__ == '__main__':
-    cli()
+    get()
