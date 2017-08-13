@@ -2,7 +2,7 @@ import os
 
 from click.testing import CliRunner
 
-from wx_map import cli
+from wpc_map import cli
 
 
 def test_scrape_map(tmpdir):
