@@ -24,7 +24,7 @@ SITE_URL = 'http://www.wpc.ncep.noaa.gov/'
 PAGE_URL = 'archives/web_pages/sfc/sfc_archive_maps.php?'
 IMAGE_FILE_TYPE = 'gif'            # format used by WPC
 MAP_CSS_SELECTOR = '.sfcmapimage'  # CSS class selector for the weather map
-WAIT_PERIOD = 5                    # value in seconds between downloads (be kind its a resource we all share)
+WAIT_PERIOD = 20                   # value in seconds between downloads (be kind its a resource we all share)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 Plan = namedtuple('Plan', 'page_url, map_path')
