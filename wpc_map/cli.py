@@ -6,17 +6,18 @@ available from May 1, 2005 onward.  Eight different kinds of maps are available 
 This program will allow you to download one type of map for a range of dates, and store the maps in a folder.
 """
 
-import requests
+import os.path
 import shutil
 import sys
-from bs4 import BeautifulSoup
-import iso8601
-from datetime import datetime, timezone, timedelta   # like it says
-import os.path
-from urllib.parse import urljoin
 import time
-import click
 from collections import namedtuple
+from datetime import datetime, timezone, timedelta
+from urllib.parse import urljoin
+import click
+import iso8601
+from bs4 import BeautifulSoup
+import requests
+
 
 # globals
 MAP_DIR = '~/Desktop/Wx_Maps'      # directory to save the downloaded maps
