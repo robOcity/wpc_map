@@ -264,7 +264,11 @@ def _make_times(delta_hours):
 
 
 def _usage():
+    """
+    Explain how to get help for the command line interface
+    """
     click.echo('Usage: python wpc_map.cli.py -h')
+
 
 if __name__ == '__main__':
     try:
