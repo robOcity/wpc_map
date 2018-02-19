@@ -263,5 +263,11 @@ def _make_times(delta_hours):
     return [f'{t:02d}' for t in range(0, 24, delta_hours)]
 
 
+def _usage():
+    click.echo('Usage: python wpc_map.cli.py -h')
+
 if __name__ == '__main__':
-    get()
+    try:
+        get()
+    except TypeError:
+        _usage()
